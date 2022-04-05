@@ -4,112 +4,117 @@ void main() {
   runApp(const MyApp());
 }
 
+class Todo {
+  bool isDone = false;
+  String title = '';
+
+  Todo(this.title);
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const TodoListPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class TodoListPage extends StatefulWidget {
+  const TodoListPage({Key? key}) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<TodoListPage> createState() => _TodoListPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _TodoListPageState extends State<TodoListPage> {
+  // 할 일 목록을 저장할 리스트
+  final _items = <Todo>[];
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  // 할 일 문자열 조작을 위한 컨트롤러
+  var _todoController = TextEditingController();
+
+  @override
+  void dispose(){
+    _todoController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+      appBar: AppBar (
+        title: const Text('남은 할 일'),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+          children: [
+            Row(
+              children: [
+                Expanded(child: TextField(
+                  controller: _todoController,
+                ),),
+                ElevatedButton(onPressed: () => _addTodo(Todo(_todoController.text)), child: const Text('추가')),
+              ],
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
+            Expanded(child: ListView(
+              children: _items.map((todo) => _buildItemWidget(todo)).toList(),
+            ),),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+
+  Widget _buildItemWidget(Todo todo) {
+    return ListTile(
+      onTap: () => _toggleTodo(todo), // Todo : 클릭 시 완료/취소 되도록 수정
+      title: Text(
+        todo.title,
+        style: todo.isDone ?
+          const TextStyle(
+            decoration: TextDecoration.lineThrough, // 취소선
+            fontStyle: FontStyle.italic, // 이탤릭체
+          )
+          : null,
+      ),
+      trailing: IconButton(
+        icon: const Icon(Icons.delete_forever),
+        onPressed: ()=>_deleteTodo(todo), //  Todo : 쓰레기통 클릭 시 삭제되도록
+      ),
+    );
+  }
+
+  // 할 일 추가 메서드
+  void _addTodo(Todo todo) {
+    setState(() {
+      _items.add(todo);
+      _todoController.text = ''; // 할 일 입력 필드를 피움
+    });
+  }
+
+  // 할 일 삭제 메서드
+  void _deleteTodo(Todo todo) {
+    setState(() {
+      _items.remove(todo);
+    });
+  }
+
+  // 할 일 완료/미완료 메서드
+  void _toggleTodo(Todo todo) {
+    setState(() {
+      todo.isDone = !todo.isDone;
+    });
+  }
+
+
+
+
 }
